@@ -28,6 +28,12 @@ mkdir -p results
   echo "hashfile: $HASHFILE"
   echo "charset1: [$CS] mask: ?1?d?d?d?d?d?d?d"
 
+  echo "--- capacidade do runner (benchmark) ---"
+  echo "nproc: $(nproc)"
+  free -h || true
+  lscpu | head -n 20 || true
+  hashcat --benchmark -m 22000 2>&1 | tail -n 12
+
   echo "--- keyspace (info, varia por build) ---"
   hashcat --keyspace -m 22000 -a 3 -1 "$CS" '?1?d?d?d?d?d?d?d' || true
 
@@ -38,7 +44,7 @@ mkdir -p results
     -1 "$CS" \
     "$HASHFILE" \
     '?1?d?d?d?d?d?d?d' \
-    -O -w 3 --status \
+    -O -w 3 --status --status-timer=10 \
     --potfile-path "$POTFILE" || true
 
   echo "--- resultados ---"
