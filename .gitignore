@@ -1,5 +1,9 @@
 results/
 results-shard/
+out-*/
 *.log
 *.zip
+*.potfile
 __pycache__/
+# garante que o hash real seja versionado (repo privado)
+!hashes/*.hc22000

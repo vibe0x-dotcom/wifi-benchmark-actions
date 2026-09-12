@@ -1,0 +1,47 @@
+name: crack-real
+
+on:
+  workflow_dispatch:
+
+jobs:
+  crack:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [A, B, C, D]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build imagem (Dockerfile do repo)
+        run: docker build -t bench .
+
+      - name: Rodar shard ${{ matrix.shard }} (hash real)
+        run: |
+          mkdir -p out-${{ matrix.shard }}
+          docker run --rm \
+            -v "$PWD:/workspace" \
+            -w /workspace \
+            -e SHARD=${{ matrix.shard }} \
+            -e HASHFILE=hashes/purific-droso.hc22000 \
+            -e POTFILE=/workspace/out-${{ matrix.shard }}/hashcat.potfile \
+            bench /workspace/scripts/run-real-shard.sh /workspace/out-${{ matrix.shard }}/shard-${{ matrix.shard }}.log
+          ls -lh out-${{ matrix.shard }}/
+
+      - name: Compactar resultados (ZIP)
+        if: always()
+        run: |
+          zip -r crack-result-${{ matrix.shard }}.zip out-${{ matrix.shard }}/ || true
+          ls -lh *.zip || true
+
+      - name: Salvar artifact ZIP
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: crack-result-${{ matrix.shard }}
+          path: crack-result-${{ matrix.shard }}.zip
+          retention-days: 5
