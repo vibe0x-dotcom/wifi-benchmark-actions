@@ -1,0 +1,5 @@
+results/
+results-shard/
+*.log
+*.zip
+__pycache__/

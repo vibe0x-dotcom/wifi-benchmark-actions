@@ -1,0 +1,55 @@
+name: benchmark
+
+on:
+  workflow_dispatch:
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    container:
+      image: ubuntu:24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - shard: A
+            label: "0-2xxxxxxx"
+          - shard: B
+            label: "3-5xxxxxxx"
+          - shard: C
+            label: "6-7xxxxxxx"
+          - shard: D
+            label: "8-9xxxxxxx"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Instalar deps (mesmas do Dockerfile)
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends bash zip clinfo pocl-opencl-icd hashcat
+          rm -rf /var/lib/apt/lists/*
+          chmod +x scripts/*.sh
+
+      - name: Executar workload sintético (shard ${{ matrix.shard }})
+        run: |
+          SHARD=${{ matrix.shard }} scripts/run-benchmark.sh benchmark-${{ matrix.shard }}.log
+          scripts/collect-result.sh benchmark-${{ matrix.shard }}.log
+          mkdir -p results-shard
+          cp -r results results-shard/${{ matrix.shard }}
+
+      - name: Compactar resultados
+        if: always()
+        run: |
+          zip -r benchmark-result-${{ matrix.shard }}.zip results-shard/ benchmark-${{ matrix.shard }}.log || true
+          ls -lh *.zip *.log || true
+
+      - name: Salvar resultado
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-result-${{ matrix.shard }}
+          path: |
+            benchmark-result-${{ matrix.shard }}.zip
+            results-shard/
+          retention-days: 5
