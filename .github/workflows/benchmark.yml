@@ -12,10 +12,8 @@ jobs:
         shard: [A, B, C, D]
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
 
       - name: Build imagem (Dockerfile do repo)
         run: docker build -t bench .
@@ -38,7 +36,7 @@ jobs:
 
       - name: Salvar artifact ZIP
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: benchmark-result-${{ matrix.shard }}
           path: benchmark-result-${{ matrix.shard }}.zip
